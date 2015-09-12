@@ -5,15 +5,16 @@
 
 SET(SRC
   MOOSAppDocumentation.cpp
+  tinyxml2.cpp
 )
 
-SET(HEADERS 
+SET(HEADERS
   MOOSAppDocumentation.h
-) 
+  tinyxml2.h
+)
 
 ADD_LIBRARY(xml-documentation ${SRC})
 
 TARGET_LINK_LIBRARIES(xml-documentation
-  tinyxml2
   mbutil
   )
