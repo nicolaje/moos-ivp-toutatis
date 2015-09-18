@@ -132,7 +132,7 @@ bool MapLocalizerParticleFilter::OnNewMail(MOOSMSG_LIST &NewMail) {
         } else if (key == "RANGE_XYZ") {
             // Range must also contain X/Y/Z of emitter
             // range,xEmitter,yEmitter,zEmitter
-            vector<string> msg_vec = parseString(msg, ',');
+            vector<string> msg_vec = parseString(msg.GetString(), ',');
             range = atof(msg_vec[0].c_str());
             xEmitter = atof(msg_vec[1].c_str());
             yEmitter = atof(msg_vec[2].c_str());
@@ -140,8 +140,9 @@ bool MapLocalizerParticleFilter::OnNewMail(MOOSMSG_LIST &NewMail) {
 
             Vector3d emitterPos;
             emitterPos << xEmitter, yEmitter, zEmitter;
-
-            pf.update_range(emitterPos, range, rangeVar);
+            if (pf.isInitialized()) {
+                pf.update_range(emitterPos, lastAltitude, range, rangeVar);
+            }
         } else if (key != "APPCAST_REQ") // handle by AppCastingMOOSApp
             reportRunWarning("Unhandled Mail: " + key);
     }
