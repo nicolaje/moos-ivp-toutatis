@@ -33,7 +33,7 @@ MapLocalizerParticleFilter::MapLocalizerParticleFilter() {
     this->filter_easting_initialized = false;
     this->filter_northing_initialized = false;
     this->mission_started = false;
-    
+
     lastGPSE = 0;
     lastGPSN = 0;
 
@@ -48,6 +48,11 @@ MapLocalizerParticleFilter::MapLocalizerParticleFilter() {
     resampleEvery = 20;
 
     resamplingMethod = RESIDUAL;
+
+    range = 10;
+    rangeVar = 5 * 5;
+    xEmitter = 0;
+    yEmitter = 0;
 }
 
 //---------------------------------------------------------
@@ -122,11 +127,22 @@ bool MapLocalizerParticleFilter::OnNewMail(MOOSMSG_LIST &NewMail) {
             lastYaw = msg.GetDouble();
         } else if (key == "GPS_TRUST") {
             gps_trust = (int) msg.GetDouble();
-        } else if(key=="MISSION_STARTED")
-        {
-            mission_started=true;
-        }
-        else if (key != "APPCAST_REQ") // handle by AppCastingMOOSApp
+        } else if (key == "MISSION_STARTED") {
+            mission_started = true;
+        } else if (key == "RANGE_XYZ") {
+            // Range must also contain X/Y/Z of emitter
+            // range,xEmitter,yEmitter,zEmitter
+            vector<string> msg_vec = parseString(msg, ',');
+            range = atof(msg_vec[0].c_str());
+            xEmitter = atof(msg_vec[1].c_str());
+            yEmitter = atof(msg_vec[2].c_str());
+            zEmitter = atof(msg_vec[3].c_str());
+
+            Vector3d emitterPos;
+            emitterPos << xEmitter, yEmitter, zEmitter;
+
+            pf.update_range(emitterPos, range, rangeVar);
+        } else if (key != "APPCAST_REQ") // handle by AppCastingMOOSApp
             reportRunWarning("Unhandled Mail: " + key);
     }
 
@@ -224,11 +240,12 @@ bool MapLocalizerParticleFilter::OnStartUp() {
                 resamplingMethod = RESIDUAL;
             }
             handled = true;
+        } else if (param == "RANGE_VAR") {
+            rangeVar = atof(value.c_str());
         }
 
         if (!handled)
             reportUnhandledConfigWarning(orig);
-
     }
 
     registerVariables();
@@ -244,7 +261,7 @@ void MapLocalizerParticleFilter::registerVariables() {
     Register("KELLER_DEPTH", 0); // iKeller
     Register("SPEED_ESTIM_LOCAL", 0);
     Register("IMU_YAW", 0);
-    Register("MISSION_STARTED",0);
+    Register("MISSION_STARTED", 0);
 }
 
 bool MapLocalizerParticleFilter::buildReport() {
@@ -277,6 +294,6 @@ bool MapLocalizerParticleFilter::buildReport() {
     }
     actab << resampleEvery << s_method;
     m_msgs << actab.getFormattedString();
-    
+
     return (true);
 }

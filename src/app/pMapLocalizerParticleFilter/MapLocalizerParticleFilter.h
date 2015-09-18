@@ -69,6 +69,13 @@ private: // State variables
     
     double beamAngle;
     double beamRange;
+    
+    // For the ranging
+    double range;
+    double rangeVar;
+    double xEmitter;
+    double yEmitter;
+    double zEmitter;
 };
 
 #endif
